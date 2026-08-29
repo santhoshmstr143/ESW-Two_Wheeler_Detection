@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Data and logs
+data/
+*.log
+
+# Model artifacts
+*.pth
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/

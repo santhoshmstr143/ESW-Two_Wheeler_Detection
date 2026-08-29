@@ -5,6 +5,25 @@ from queue import Queue
 from smbus2 import SMBus
 from supabase import create_client
 
+
+def load_env_file():
+    """Load project-level environment variables if present without changing runtime behavior."""
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env_path = os.path.join(root_dir, ".env")
+    if not os.path.exists(env_path):
+        return
+
+    with open(env_path, "r", encoding="utf-8") as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+load_env_file()
+
 # Pothole detection imports
 import torch
 import torch.nn as nn
@@ -16,26 +35,25 @@ from picamera2 import Picamera2
 from collections import deque
 
 # ========= Supabase Config =========
-SUPABASE_URL = "https://ghtqafnlnijxvsmzdnmh.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdodHFhZm5sbmlqeHZzbXpkbm1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NDQyNjcsImV4cCI6MjA3NTMyMDI2N30.Q1LGQP8JQdWn6rJJ1XRYT8rfo9b2Q5YfWUytrzQEsa0"
-# NOTE: keep your key secure. I left it as-is from your snippet but consider env vars.
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://ghtqafnlnijxvsmzdnmh.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdodHFhZm5sbmlqeHZzbXpkbm1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3NDQyNjcsImV4cCI6MjA3NTMyMDI2N30.Q1LGQP8JQdWn6rJJ1XRYT8rfo9b2Q5YfWUytrzQEsa0")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ========= Hardware Config =========
-BUS_NUM = 1
-ADDR = 0x68
-PWR_MGMT_1 = 0x6B
-ACCEL_XOUT_H = 0x3B
-GYRO_XOUT_H = 0x43
-GPS_PORT = "/dev/serial0"
-GPS_BAUD = 9600
-IMU_SAMPLE_RATE = 104  # 104 samples per second for IMU
+BUS_NUM = int(os.getenv("BUS_NUM", "1"))
+ADDR = int(os.getenv("IMU_ADDR", "0x68"), 16)
+PWR_MGMT_1 = int(os.getenv("PWR_MGMT_1", "0x6B"), 16)
+ACCEL_XOUT_H = int(os.getenv("ACCEL_XOUT_H", "0x3B"), 16)
+GYRO_XOUT_H = int(os.getenv("GYRO_XOUT_H", "0x43"), 16)
+GPS_PORT = os.getenv("GPS_PORT", "/dev/serial0")
+GPS_BAUD = int(os.getenv("GPS_BAUD", "9600"))
+IMU_SAMPLE_RATE = int(os.getenv("IMU_SAMPLE_RATE", "104"))
 
 # ========= LSTM Event Detection Config =========
-LSTM_MODEL_PATH = "best_model.pth"
-LSTM_WINDOW_SIZE = 40  # Must match training n_time_steps
-LSTM_STRIDE = 10  # How often to run inference (every N samples)
+LSTM_MODEL_PATH = os.getenv("LSTM_MODEL_PATH", "best_model.pth")
+LSTM_WINDOW_SIZE = int(os.getenv("LSTM_WINDOW_SIZE", "40"))
+LSTM_STRIDE = int(os.getenv("LSTM_STRIDE", "10"))
 
 # ========= Globals =========
 running = False
@@ -73,7 +91,7 @@ stop_event = Event()
 
 # ========== Pothole model & preprocessing ==========
 # Will be loaded the first time the pothole thread runs (or you can load here)
-MODEL_PATH = "pothole_model.pth"
+MODEL_PATH = os.getenv("POTHOLE_MODEL_PATH", "pothole_model.pth")
 classes = ['Plain', 'Pothole']
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
